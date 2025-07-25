@@ -3,6 +3,7 @@
 import yfinance as yf
 import pandas as pd
 import plotly.graph_objects as go
+from dash import Dash, html
 
 
 # apple = yf.Ticker("AAPL")
@@ -10,7 +11,7 @@ import plotly.graph_objects as go
 
 # Hold list of ticker symbols
 portfolio = [
-    # 'AAPL'
+    'AAPL'
     'VOO', 
     'FBTC', 
     'LMT',
