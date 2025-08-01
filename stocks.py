@@ -15,6 +15,52 @@ portfolio = [
     'AAPL', 'VOO', 'FBTC', 'LMT', 'VXUS'
 ]
 
+# def data_grab(tickers):
+#     """
+#     Fetches stock data for the given tickers from the Polygon API.
+#     Returns a DataFrame with the stock data.
+#     """
+#     for item in tickers:
+#     DAYS_BACK = 200
+#     ticker_df = pd.DataFrame(
+#         client.list_aggs(
+#             tickers,
+#             1,
+#             "day",
+#             (date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
+#             date.today().strftime("%Y-%m-%d"),
+#             adjusted="true",
+#             sort="asc",
+#             limit=250
+#         )
+#     )
+#     ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
+#     ticker_df['date'] = ticker_df['timestamp'].dt.date
+#     ticker_df.set_index('date', inplace=True)
+
+#     sma50_raw = client.get_sma(
+#         ticker=tickers,
+#         timespan="day",
+#         adjusted="true",
+#         window="50",
+#         series_type="close",
+#         order="desc",
+#         limit=250,
+#     )
+#     # Convert SMA data to DataFrame
+#     sma50_df = pd.DataFrame(sma50_raw.values)
+#     sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
+#     sma50_df['date'] = sma50_df['timestamp'].dt.date
+#     sma50_df.set_index('date', inplace=True)   
+
+#     # Join SMA values to ticker_df on their index
+#     ticker_df = ticker_df.join(sma50_df[['value']], how='left')
+#     ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
+
+#     return ticker_df
+
+# ticker_data = data_grab(portfolio)
+
 app.layout = html.Div([
     html.Div(children='Stocks'),
     html.Hr(),
@@ -29,7 +75,7 @@ app.layout = html.Div([
     Input(component_id='refresh-btn', component_property='n_clicks')
 )
 def update_graph(selection, n_clicks):
-    DAYS_BACK = 120
+    DAYS_BACK = 200
     ticker_df = pd.DataFrame(
         client.list_aggs(
             selection,
@@ -39,7 +85,7 @@ def update_graph(selection, n_clicks):
             date.today().strftime("%Y-%m-%d"),
             adjusted="true",
             sort="asc",
-            limit=120
+            limit=250
         )
     )
     ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
@@ -53,7 +99,7 @@ def update_graph(selection, n_clicks):
         window="50",
         series_type="close",
         order="desc",
-        limit="100",
+        limit=250,
     )
     # Convert SMA data to DataFrame
     sma50_df = pd.DataFrame(sma50_raw.values)
