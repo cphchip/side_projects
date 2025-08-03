@@ -12,54 +12,58 @@ app = Dash()
 
 # Hold list of ticker symbols
 portfolio = [
-    'AAPL', 'VOO', 'FBTC', 'LMT', 'VXUS'
+    'AAPL', 'VOO'
 ]
+# , 'VOO', 'FBTC', 'LMT', 'VXUS'
 
-# def data_grab(tickers):
-#     """
-#     Fetches stock data for the given tickers from the Polygon API.
-#     Returns a DataFrame with the stock data.
-#     """
-#     for item in tickers:
-#     DAYS_BACK = 200
-#     ticker_df = pd.DataFrame(
-#         client.list_aggs(
-#             tickers,
-#             1,
-#             "day",
-#             (date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
-#             date.today().strftime("%Y-%m-%d"),
-#             adjusted="true",
-#             sort="asc",
-#             limit=250
-#         )
-#     )
-#     ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
-#     ticker_df['date'] = ticker_df['timestamp'].dt.date
-#     ticker_df.set_index('date', inplace=True)
+def get_ticker_data(tickers):
+    """
+    Fetches stock data for the given tickers from the Polygon API.
+    Returns a list of DataFrames with the stock data.
+    """
+    ticker_data_dict = {}
+    for item in tickers:
+        DAYS_BACK = 200
+        ticker_df = pd.DataFrame(
+            client.list_aggs(
+                ticker=item,
+                multiplier=1,
+                timespan="day",
+                from_=(date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
+                to=date.today().strftime("%Y-%m-%d"),
+                adjusted="true",
+                sort="asc",
+                limit=250
+            )
+        )
+        ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
+        ticker_df['date'] = ticker_df['timestamp'].dt.date
+        ticker_df.set_index('date', inplace=True)
 
-#     sma50_raw = client.get_sma(
-#         ticker=tickers,
-#         timespan="day",
-#         adjusted="true",
-#         window="50",
-#         series_type="close",
-#         order="desc",
-#         limit=250,
-#     )
-#     # Convert SMA data to DataFrame
-#     sma50_df = pd.DataFrame(sma50_raw.values)
-#     sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
-#     sma50_df['date'] = sma50_df['timestamp'].dt.date
-#     sma50_df.set_index('date', inplace=True)   
+        # sma50_raw = client.get_sma(
+        #     ticker=tickers,
+        #     timespan="day",
+        #     adjusted="true",
+        #     window="50",
+        #     series_type="close",
+        #     order="desc",
+        #     limit=250,
+        # )
+        # # Convert SMA data to DataFrame
+        # sma50_df = pd.DataFrame(sma50_raw.values)
+        # sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
+        # sma50_df['date'] = sma50_df['timestamp'].dt.date
+        # sma50_df.set_index('date', inplace=True)   
 
-#     # Join SMA values to ticker_df on their index
-#     ticker_df = ticker_df.join(sma50_df[['value']], how='left')
-#     ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
+        # # Join SMA values to ticker_df on their index
+        # ticker_df = ticker_df.join(sma50_df[['value']], how='left')
+        # ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
 
-#     return ticker_df
+        ticker_data_dict.update({item: ticker_df})
 
-# ticker_data = data_grab(portfolio)
+    return ticker_data_dict
+
+ticker_data = get_ticker_data(portfolio)
 
 app.layout = html.Div([
     html.Div(children='Stocks'),
@@ -75,41 +79,41 @@ app.layout = html.Div([
     Input(component_id='refresh-btn', component_property='n_clicks')
 )
 def update_graph(selection, n_clicks):
-    DAYS_BACK = 200
-    ticker_df = pd.DataFrame(
-        client.list_aggs(
-            selection,
-            1,
-            "day",
-            (date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
-            date.today().strftime("%Y-%m-%d"),
-            adjusted="true",
-            sort="asc",
-            limit=250
-        )
-    )
-    ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
-    ticker_df['date'] = ticker_df['timestamp'].dt.date
-    ticker_df.set_index('date', inplace=True)
+    # DAYS_BACK = 200
+    # ticker_df = pd.DataFrame(
+    #     client.list_aggs(
+    #         selection,
+    #         1,
+    #         "day",
+    #         (date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
+    #         date.today().strftime("%Y-%m-%d"),
+    #         adjusted="true",
+    #         sort="asc",
+    #         limit=250
+    #     )
+    # )
+    # ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
+    # ticker_df['date'] = ticker_df['timestamp'].dt.date
+    # ticker_df.set_index('date', inplace=True)
 
-    sma50_raw = client.get_sma(
-        ticker=selection,
-        timespan="day",
-        adjusted="true",
-        window="50",
-        series_type="close",
-        order="desc",
-        limit=250,
-    )
-    # Convert SMA data to DataFrame
-    sma50_df = pd.DataFrame(sma50_raw.values)
-    sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
-    sma50_df['date'] = sma50_df['timestamp'].dt.date
-    sma50_df.set_index('date', inplace=True)
+    # sma50_raw = client.get_sma(
+    #     ticker=selection,
+    #     timespan="day",
+    #     adjusted="true",
+    #     window="50",
+    #     series_type="close",
+    #     order="desc",
+    #     limit=250,
+    # )
+    # # Convert SMA data to DataFrame
+    # sma50_df = pd.DataFrame(sma50_raw.values)
+    # sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
+    # sma50_df['date'] = sma50_df['timestamp'].dt.date
+    # sma50_df.set_index('date', inplace=True)
 
-    # Join SMA values to ticker_df on their index
-    ticker_df = ticker_df.join(sma50_df[['value']], how='left')
-    ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
+    # # Join SMA values to ticker_df on their index
+    # ticker_df = ticker_df.join(sma50_df[['value']], how='left')
+    # ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
     
     fig = make_subplots(
         rows=2,
@@ -120,34 +124,37 @@ def update_graph(selection, n_clicks):
         subplot_titles=(f"{selection} Price", "Volume")
     )
 
-    x_dates = ticker_df.index
+    # ticker_index = ticker_data.index(selection)
+    candle_data = ticker_data[selection]
+
+    x_dates = candle_data.index
 
     # Create the candlestick and volume traces
     fig.add_trace(
         go.Candlestick(
             x=x_dates,
-            open=ticker_df['open'],
-            high=ticker_df['high'],
-            low=ticker_df['low'],
-            close=ticker_df['close'],
+            open=candle_data['open'],
+            high=candle_data['high'],
+            low=candle_data['low'],
+            close=candle_data['close'],
             name=f'{selection} OHLC'
         ),
         row=1, col=1
     )
-    fig.add_trace(
-        go.Scatter(
-            x=x_dates,
-            y=ticker_df['SMA50'],
-            mode='lines',
-            line=dict(color='blue', width=2),
-            name='50-day MA'
-        ),
-        row=1, col=1
-    )
+    # fig.add_trace(
+    #     go.Scatter(
+    #         x=x_dates,
+    #         y=ticker_data['SMA50'],
+    #         mode='lines',
+    #         line=dict(color='blue', width=2),
+    #         name='50-day MA'
+    #     ),
+    #     row=1, col=1
+    # )
     fig.add_trace(
         go.Bar(
             x=x_dates,
-            y=ticker_df['volume'],
+            y=candle_data['volume'],
             name='Volume',
             marker_color='rgba(0, 0, 255, 0.5)'
         ),
