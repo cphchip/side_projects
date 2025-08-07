@@ -7,14 +7,16 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from dash import Dash, Input, Output, callback, dcc, html
 
+
 client = RESTClient("AgmVIXjnEAmbTzQc6wDT5n4xVoahcn7Z")
 app = Dash()
 
 # Hold list of ticker symbols
 portfolio = [
-    'AAPL', 'VOO'
+    'VXUS', 'VOO', 'AAPL', 'LMT', 'FBTC' 
 ]
-# , 'VOO', 'FBTC', 'LMT', 'VXUS'
+timespan = [50, 100, 200]
+
 
 def get_ticker_data(tickers):
     """
@@ -23,7 +25,7 @@ def get_ticker_data(tickers):
     """
     ticker_data_dict = {}
     for item in tickers:
-        DAYS_BACK = 200
+        DAYS_BACK = 750
         ticker_df = pd.DataFrame(
             client.list_aggs(
                 ticker=item,
@@ -33,88 +35,38 @@ def get_ticker_data(tickers):
                 to=date.today().strftime("%Y-%m-%d"),
                 adjusted="true",
                 sort="asc",
-                limit=250
+                # limit=750
             )
         )
         ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
         ticker_df['date'] = ticker_df['timestamp'].dt.date
         ticker_df.set_index('date', inplace=True)
 
-        # sma50_raw = client.get_sma(
-        #     ticker=tickers,
-        #     timespan="day",
-        #     adjusted="true",
-        #     window="50",
-        #     series_type="close",
-        #     order="desc",
-        #     limit=250,
-        # )
-        # # Convert SMA data to DataFrame
-        # sma50_df = pd.DataFrame(sma50_raw.values)
-        # sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
-        # sma50_df['date'] = sma50_df['timestamp'].dt.date
-        # sma50_df.set_index('date', inplace=True)   
+        # Calcuate Simple Moving Averages (SMA)
+        ticker_df['SMA50'] = ticker_df['close'].rolling(window=50).mean()
+        ticker_df['SMA200'] = ticker_df['close'].rolling(window=200).mean()
 
-        # # Join SMA values to ticker_df on their index
-        # ticker_df = ticker_df.join(sma50_df[['value']], how='left')
-        # ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
-
+        # Add the DataFrame to the dictionary with the ticker as the key
         ticker_data_dict.update({item: ticker_df})
 
     return ticker_data_dict
 
 ticker_data = get_ticker_data(portfolio)
 
+# Setup the Dash app layout
 app.layout = html.Div([
     html.Div(children='Stocks'),
     html.Hr(),
-    dcc.RadioItems(options=portfolio, value='AAPL', id='controls-and-radio'),
+    dcc.RadioItems(options=sorted(portfolio), value='AAPL', id='controls-and-radio'),
+    dcc.RadioItems(options=timespan, value=200, id='timeframe-radio'),
     dcc.Graph(figure={}, id='controls-and-graph',style={'height': '900px'}),
-    html.Button("Refresh", id="refresh-btn", n_clicks=0)
 ])
-
 @callback(
     Output(component_id='controls-and-graph', component_property='figure'),
     Input(component_id='controls-and-radio', component_property='value'),
-    Input(component_id='refresh-btn', component_property='n_clicks')
+    Input(component_id='timeframe-radio', component_property='value')
 )
-def update_graph(selection, n_clicks):
-    # DAYS_BACK = 200
-    # ticker_df = pd.DataFrame(
-    #     client.list_aggs(
-    #         selection,
-    #         1,
-    #         "day",
-    #         (date.today() - timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d"),
-    #         date.today().strftime("%Y-%m-%d"),
-    #         adjusted="true",
-    #         sort="asc",
-    #         limit=250
-    #     )
-    # )
-    # ticker_df['timestamp'] = pd.to_datetime(ticker_df['timestamp'], unit='ms')
-    # ticker_df['date'] = ticker_df['timestamp'].dt.date
-    # ticker_df.set_index('date', inplace=True)
-
-    # sma50_raw = client.get_sma(
-    #     ticker=selection,
-    #     timespan="day",
-    #     adjusted="true",
-    #     window="50",
-    #     series_type="close",
-    #     order="desc",
-    #     limit=250,
-    # )
-    # # Convert SMA data to DataFrame
-    # sma50_df = pd.DataFrame(sma50_raw.values)
-    # sma50_df['timestamp'] = pd.to_datetime(sma50_df['timestamp'], unit='ms', errors='coerce')
-    # sma50_df['date'] = sma50_df['timestamp'].dt.date
-    # sma50_df.set_index('date', inplace=True)
-
-    # # Join SMA values to ticker_df on their index
-    # ticker_df = ticker_df.join(sma50_df[['value']], how='left')
-    # ticker_df.rename(columns={'value': 'SMA50'}, inplace=True)
-    
+def update_graph(selection, timespan):
     fig = make_subplots(
         rows=2,
         cols=1,
@@ -124,9 +76,7 @@ def update_graph(selection, n_clicks):
         subplot_titles=(f"{selection} Price", "Volume")
     )
 
-    # ticker_index = ticker_data.index(selection)
-    candle_data = ticker_data[selection]
-
+    candle_data = ticker_data[selection].iloc[-timespan:] # just plot the last n selected records
     x_dates = candle_data.index
 
     # Create the candlestick and volume traces
@@ -141,16 +91,26 @@ def update_graph(selection, n_clicks):
         ),
         row=1, col=1
     )
-    # fig.add_trace(
-    #     go.Scatter(
-    #         x=x_dates,
-    #         y=ticker_data['SMA50'],
-    #         mode='lines',
-    #         line=dict(color='blue', width=2),
-    #         name='50-day MA'
-    #     ),
-    #     row=1, col=1
-    # )
+    fig.add_trace(
+        go.Scatter(
+            x=x_dates,
+            y=candle_data['SMA50'],
+            mode='lines',
+            line=dict(color='blue', width=2),
+            name='50-day MA'
+        ),
+        row=1, col=1
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=x_dates,
+            y=candle_data['SMA200'],
+            mode='lines',
+            line=dict(color='orange', width=2),
+            name='200-day MA'
+        ),
+        row=1, col=1
+    )
     fig.add_trace(
         go.Bar(
             x=x_dates,
@@ -174,4 +134,4 @@ def update_graph(selection, n_clicks):
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)
