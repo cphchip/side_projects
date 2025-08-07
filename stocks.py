@@ -57,9 +57,17 @@ ticker_data = get_ticker_data(portfolio)
 app.layout = html.Div([
     html.Div(children='Stocks'),
     html.Hr(),
-    dcc.RadioItems(options=sorted(portfolio), value='AAPL', id='controls-and-radio'),
-    dcc.RadioItems(options=timespan, value=200, id='timeframe-radio'),
-    dcc.Graph(figure={}, id='controls-and-graph',style={'height': '900px'}),
+    html.Div([
+        html.Div([
+            html.H3('Ticker'),
+            dcc.RadioItems(options=sorted(portfolio), value='AAPL', id='controls-and-radio'),
+        ], style={'margin-right': '40px', 'flex': '1'}),
+        html.Div([
+            html.H3('Timeframe'),
+            dcc.RadioItems(options=timespan, value=200, id='timeframe-radio'),
+        ], style={'flex': '1'}),
+    ], style={'display': 'flex', 'flex-direction': 'row', 'margin-bottom': '30px'}),
+    dcc.Graph(figure={}, id='controls-and-graph', style={'height': '900px'}),
 ])
 @callback(
     Output(component_id='controls-and-graph', component_property='figure'),
