@@ -13,9 +13,11 @@ app = Dash()
 
 # Hold list of ticker symbols
 portfolio = [
-    'VXUS', 'VOO', 'AAPL', 'LMT', 'FBTC' 
+    'VXUS', 'VOO', 'AAPL', 'VTWO', 'FBTC' 
 ]
-timespan = [50, 100, 200]
+timespan = [
+    50, 100, 200
+]
 
 
 def get_ticker_data(tickers):
