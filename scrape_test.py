@@ -2,6 +2,8 @@ import requests
 from datetime import datetime, timedelta
 from stocks_apiKey import news_token
 
+
+
 url = "https://api.benzinga.com/api/v2/news"
 news_token = news_token
 ticker = "VOO"
