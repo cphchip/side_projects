@@ -11,6 +11,7 @@ from stocks_apiKey import news_token, polygon_token
 import joblib
 import re
 import numpy as np
+# from math import mean
 
 
 client = RESTClient(polygon_token)
@@ -150,10 +151,7 @@ def get_ticker_data(tickers):
 
     return ticker_data_dict, ticker_news_dict
 
-
 ticker_data, ticker_news = get_ticker_data(portfolio)
-
-print(ticker_news)
 
 ################################### Dash App Layout and Callbacks #####################################
 
@@ -170,11 +168,14 @@ app.layout = html.Div([
             html.H3('Timeframe'),
             dcc.RadioItems(options=timespan, value=200, id='timeframe-radio'),
         ], style={'flex': '1'}),
-    ], style={'display': 'flex', 'flex-direction': 'row', 'margin-bottom': '30px'}),
+        html.Div(id='sentiment-label', style={'flex': '1', 'alignSelf': 'center', 'fontWeight': 'bold', 'fontSize': '22px'}),
+    ], style={'display': 'flex', 'flex-direction': 'row', 'margin-bottom': '30px', 'alignItems': 'center'}),
     dcc.Graph(figure={}, id='controls-and-graph', style={'height': '1500px'}),
 ])
 @callback(
     Output(component_id='controls-and-graph', component_property='figure'),
+    Output(component_id='sentiment-label', component_property='children'),
+    Output(component_id='sentiment-label', component_property='style'),
     Input(component_id='controls-and-radio', component_property='value'),
     Input(component_id='timeframe-radio', component_property='value')
 )
@@ -182,7 +183,6 @@ def update_graph(selection, timespan):
     fig = make_subplots(
         rows=3,
         cols=1,
-        # shared_xaxes=True,
         shared_xaxes=False,
         row_heights=[0.8, 0.2, 0.4],
         vertical_spacing=.15,
@@ -247,17 +247,27 @@ def update_graph(selection, timespan):
     )
     # --- news table ---
     headlines = ticker_news.get(selection)  # get headlines for this ticker
+    sentiment_scores = [score[1] for score in headlines[0]] if headlines else []
     if not headlines:
-        # headlines = ["No news available."]
         headlines = "No news available."
+        mean_sentiment = None
+    else:
+        mean_sentiment = np.mean(sentiment_scores) if sentiment_scores else None
+    # Color coding: green for positive, red for negative, gray for neutral/None
+    if mean_sentiment is None:
+        sentiment_text = "No sentiment available"
+        sentiment_color = "gray"
+    else:
+        sentiment_text = f"Mean Sentiment: {mean_sentiment:.2f}"
+        sentiment_color = "green" if mean_sentiment > 0 else ("red" if mean_sentiment < 0 else "gray")
     fig.add_trace(
         go.Table(
             header=dict(values=["News Headlines"], fill_color="paleturquoise", align="left"),
-            cells=dict(values=headlines, fill_color="lavender", align="left"),
+            cells=dict(values=headlines, fill_color="lavender", align="left")
         ),
         row=3, col=1
     )
-    return fig
+    return fig, sentiment_text, {"color": sentiment_color, "fontWeight": "bold", "fontSize": "22px"}
 
 
 if __name__ == '__main__':
