@@ -174,8 +174,8 @@ app.layout = html.Div([
 ])
 @callback(
     Output(component_id='controls-and-graph', component_property='figure'),
-    # Output(component_id='sentiment-label', component_property='children'),
-    # Output(component_id='sentiment-label', component_property='style'),
+    Output(component_id='sentiment-label', component_property='children'),
+    Output(component_id='sentiment-label', component_property='style'),
     Input(component_id='controls-and-radio', component_property='value'),
     Input(component_id='timeframe-radio', component_property='value')
 )
@@ -248,20 +248,16 @@ def update_graph(selection, timespan):
     # --- news table ---
     headlines = ticker_news.get(selection)  # get headlines for this ticker
     sentiment_scores = [score[1] for score in headlines[0]] if headlines else []
-    # if not headlines:
-    #     headlines = "No news available."
-    #     mean_sentiment = None
-    # else:
-    #     mean_sentiment = np.mean(sentiment_scores) if sentiment_scores else None
-    #     sentiment_text = f"Mean Sentiment: {mean_sentiment:.2f}"
-    #     sentiment_color = "green" if mean_sentiment > 0 else ("red" if mean_sentiment < 0 else "gray")
-    # # Color coding: green for positive, red for negative, gray for neutral/None
-    # if mean_sentiment is None:
-    #     sentiment_text = "No sentiment available"
-    #     sentiment_color = "gray"
-    # else:
-    #     sentiment_text = f"Mean Sentiment: {mean_sentiment:.2f}"
-    #     sentiment_color = "green" if mean_sentiment > 0 else ("red" if mean_sentiment < 0 else "gray")
+    if not headlines[0]:
+        # headlines = "No news available."
+        mean_sentiment = None
+        sentiment_text = "No sentiment available"
+        sentiment_color = "gray"
+    else:
+        mean_sentiment = np.mean(sentiment_scores) if sentiment_scores else None
+        sentiment_text = f"Mean Sentiment: {mean_sentiment:.2f}"
+        sentiment_color = "green" if mean_sentiment > 0 else ("red" if mean_sentiment < 0 else "gray")
+
     fig.add_trace(
         go.Table(
             header=dict(values=["News Headlines"], fill_color="paleturquoise", align="left"),
@@ -269,7 +265,7 @@ def update_graph(selection, timespan):
         ),
         row=3, col=1
     )
-    return fig #, sentiment_text, {"color": sentiment_color, "fontWeight": "bold", "fontSize": "22px"}
+    return fig, sentiment_text, {"color": sentiment_color, "fontWeight": "bold", "fontSize": "22px"}
 
 
 if __name__ == '__main__':
